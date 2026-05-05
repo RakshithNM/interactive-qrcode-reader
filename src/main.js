@@ -254,6 +254,19 @@ app.innerHTML = `
         </div>
         <div id="maskingPanel" class="mask-grid"></div>
       </section>
+
+      <footer class="panel footer-panel">
+        <div class="footer-copy">
+          <p class="eyebrow">Read more</p>
+          <h2>Building an interactive QR code reader that explains itself</h2>
+          <p>
+            A write-up of the QR reader, the grouped animation, masking breakdown, and the teaching UI behind it.
+          </p>
+        </div>
+        <a class="footer-link" href="https://blog.rakshithnettar.com/building-an-interactive-qr-code-reader-that-explains-itself/" target="_blank" rel="noreferrer">
+          Open the blog post
+        </a>
+      </footer>
     </div>
   </div>
 `

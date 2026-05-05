@@ -141,6 +141,48 @@ button {
   gap: 20px;
 }
 
+.footer-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 18px;
+  padding: 22px;
+}
+
+.footer-copy {
+  display: grid;
+  gap: 8px;
+  max-width: 68ch;
+}
+
+.footer-copy h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: -0.03em;
+}
+
+.footer-copy p {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.footer-link {
+  align-self: center;
+  white-space: nowrap;
+  font-weight: 700;
+  color: white;
+  text-decoration: none;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2563eb, #38bdf8);
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.24);
+}
+
+.footer-link:hover,
+.footer-link:focus-visible {
+  transform: translateY(-1px);
+}
+
 .controls-panel,
 .viewer-panel,
 .summary-card,
