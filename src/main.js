@@ -78,6 +78,9 @@ const FOCUS_ORDER = [
   'remainder'
 ]
 
+const FOCUS_ORDER_INDEX = new Map(FOCUS_ORDER.map((key, index) => [key, index]))
+const ANIMATION_TICK_MS = 24
+
 const app = document.querySelector('#app')
 
 const state = {
@@ -87,6 +90,11 @@ const state = {
   maskDetailPattern: null,
   activeSelection: null,
   hoveredModuleKey: null,
+  animation: {
+    running: false,
+    progress: 0,
+    timerId: null
+  },
   analysis: null,
   error: null
 }
@@ -172,6 +180,11 @@ app.innerHTML = `
               <p class="eyebrow">Exploded view</p>
               <h2>Interactive module map</h2>
             </div>
+            <div class="panel-actions">
+              <button id="animateButton" class="ghost-button" type="button">Animate fill</button>
+              <button id="singleStepButton" class="ghost-button" type="button">Single step</button>
+              <button id="groupStepButton" class="ghost-button" type="button">Group step</button>
+            </div>
           </div>
           <div id="matrixShell" class="matrix-shell"></div>
           <p class="hint">
@@ -248,6 +261,9 @@ app.innerHTML = `
 const textInput = document.querySelector('#textInput')
 const eccSelect = document.querySelector('#eccSelect')
 const overlayModes = document.querySelector('#overlayModes')
+const animateButton = document.querySelector('#animateButton')
+const singleStepButton = document.querySelector('#singleStepButton')
+const groupStepButton = document.querySelector('#groupStepButton')
 const clearFocusButton = document.querySelector('#clearFocusButton')
 const statusPanel = document.querySelector('#statusPanel')
 const summaryGrid = document.querySelector('#summaryGrid')
@@ -459,6 +475,223 @@ function getPlacementOrderedModules() {
   return state.analysis.modules
     .filter((module) => module.placementIndex != null)
     .sort((left, right) => left.placementIndex - right.placementIndex)
+}
+
+function getAnimationSequence() {
+  if (!state.analysis) return []
+
+  return [...state.analysis.modules].sort((left, right) => {
+    const leftGroup = FOCUS_ORDER_INDEX.get(left.focusKey) ?? FOCUS_ORDER.length
+    const rightGroup = FOCUS_ORDER_INDEX.get(right.focusKey) ?? FOCUS_ORDER.length
+    if (leftGroup !== rightGroup) return leftGroup - rightGroup
+
+    const leftPlacement = getModulePlacementValue(left)
+    const rightPlacement = getModulePlacementValue(right)
+    if (leftPlacement !== rightPlacement) return leftPlacement - rightPlacement
+
+    const rowDelta = left.row - right.row
+    if (rowDelta !== 0) return rowDelta
+
+    return left.col - right.col
+  })
+}
+
+function getAnimationPlan() {
+  const sequence = getAnimationSequence()
+  const indexByKey = new Map(sequence.map((module, index) => [module.key, index]))
+  const total = sequence.length
+  const progress = Math.min(Math.max(state.animation.progress, 0), total)
+  const currentIndex = progress > 0 ? progress - 1 : null
+  const currentModule = currentIndex != null ? sequence[currentIndex] || null : null
+  const currentLabel = currentModule ? (FOCUS_LABELS[currentModule.focusKey] || describeFocus(currentModule)) : null
+
+  return {
+    sequence,
+    indexByKey,
+    total,
+    progress,
+    currentModule,
+    currentLabel,
+    completed: total > 0 && progress >= total
+  }
+}
+
+function updateAnimationButtons() {
+  if (animateButton) {
+    const plan = getAnimationPlan()
+    const hasProgress = plan.progress > 0
+
+    animateButton.textContent = state.animation.running
+      ? 'Pause fill'
+      : plan.completed
+        ? 'Replay fill'
+        : hasProgress
+          ? 'Resume fill'
+          : 'Animate fill'
+    animateButton.classList.toggle('is-active', state.animation.running)
+    animateButton.setAttribute('aria-pressed', String(state.animation.running))
+    animateButton.disabled = !state.analysis
+  }
+
+  if (singleStepButton) {
+    singleStepButton.disabled = !state.analysis
+  }
+
+  if (groupStepButton) {
+    groupStepButton.disabled = !state.analysis
+  }
+}
+
+function stopAnimation({ reset = false } = {}) {
+  if (state.animation.timerId != null) {
+    window.clearInterval(state.animation.timerId)
+    state.animation.timerId = null
+  }
+
+  state.animation.running = false
+
+  if (reset) {
+    state.animation.progress = 0
+  }
+
+  updateAnimationButtons()
+}
+
+function renderAnimationUi() {
+  updateAnimationButtons()
+  renderStatus()
+}
+
+function advanceSingleStep() {
+  if (!state.analysis) return
+
+  if (state.animation.running) {
+    stopAnimation()
+  }
+
+  const plan = getAnimationPlan()
+  if (!plan.total) return
+
+  if (plan.completed) {
+    state.animation.progress = 0
+  }
+
+  state.animation.progress = Math.min(state.animation.progress + 1, plan.total)
+  renderMatrix()
+  renderAnimationUi()
+
+  if (state.animation.progress >= plan.total) {
+    stopAnimation()
+    renderAnimationUi()
+  }
+}
+
+function advanceGroupStep() {
+  if (!state.analysis) return
+
+  if (state.animation.running) {
+    stopAnimation()
+  }
+
+  const plan = getAnimationPlan()
+  if (!plan.total) return
+
+  if (plan.completed) {
+    state.animation.progress = 0
+  }
+
+  const currentProgress = state.animation.progress
+  if (currentProgress >= plan.total) {
+    state.animation.progress = 0
+  }
+
+  const startIndex = state.animation.progress
+  const nextModule = plan.sequence[startIndex]
+  if (!nextModule) return
+
+  const targetGroupKey = nextModule.focusKey
+  let targetProgress = startIndex
+
+  while (targetProgress < plan.total) {
+    const module = plan.sequence[targetProgress]
+    if (module.focusKey !== targetGroupKey) {
+      break
+    }
+    targetProgress += 1
+  }
+
+  state.animation.progress = Math.min(targetProgress, plan.total)
+  renderMatrix()
+  renderAnimationUi()
+
+  if (state.animation.progress >= plan.total) {
+    stopAnimation()
+    renderAnimationUi()
+  }
+}
+
+function stepAnimation() {
+  const plan = getAnimationPlan()
+  if (!plan.total) {
+    stopAnimation({ reset: true })
+    return
+  }
+
+  if (state.animation.progress >= plan.total) {
+    stopAnimation()
+    renderAnimationUi()
+    return
+  }
+
+  state.animation.progress += 1
+  renderMatrix()
+  renderAnimationUi()
+
+  if (state.animation.progress >= plan.total) {
+    stopAnimation()
+    renderAnimationUi()
+  }
+}
+
+function startAnimation() {
+  const plan = getAnimationPlan()
+  if (!plan.total) return
+
+  if (plan.completed) {
+    state.animation.progress = 0
+  }
+
+  if (state.animation.progress === 0) {
+    state.animation.progress = 1
+  }
+
+  if (state.animation.running) return
+
+  if (state.animation.timerId != null) {
+    window.clearInterval(state.animation.timerId)
+  }
+
+  state.animation.running = true
+  state.animation.timerId = window.setInterval(stepAnimation, ANIMATION_TICK_MS)
+  renderMatrix()
+  renderAnimationUi()
+
+  if (state.animation.progress >= plan.total) {
+    stopAnimation()
+    renderAnimationUi()
+  }
+}
+
+function toggleAnimation() {
+  if (!state.analysis) return
+
+  if (state.animation.running) {
+    stopAnimation()
+    renderAnimationUi()
+    return
+  }
+
+  startAnimation()
 }
 
 function getOrderedModulesForSelection(selection) {
@@ -928,12 +1161,21 @@ function renderStatus() {
   }
 
   const { version, size, maskPattern, errorCorrectionLevel } = state.analysis
+  const animationPlan = getAnimationPlan()
+  const animationPills = state.animation.running || state.animation.progress > 0
+    ? `
+      <span class="metric-pill">Animate ${animationPlan.progress} / ${animationPlan.total}</span>
+      <span class="metric-pill">Now ${escapeHtml(animationPlan.currentLabel || 'starting')}</span>
+    `
+    : ''
+
   statusPanel.innerHTML = `
     <div class="status-metrics">
       <span class="metric-pill">Version ${version}</span>
       <span class="metric-pill">${size} × ${size} modules</span>
       <span class="metric-pill">Mask ${maskPattern}</span>
       <span class="metric-pill">EC ${errorCorrectionLevel}</span>
+      ${animationPills}
     </div>
   `
 }
@@ -1005,8 +1247,16 @@ function renderMatrix() {
 
   const size = state.analysis.size
   const overlay = getActiveMatrixOverlay()
+  const animationPlan = getAnimationPlan()
+  const animated = animationPlan.total > 0 && (state.animation.running || state.animation.progress > 0)
   const cells = state.analysis.modules.map((module) => {
     const visual = getModuleVisual(module)
+    const animationIndex = animationPlan.indexByKey.get(module.key)
+    const isRevealed = !animated || (animationIndex != null && animationIndex < animationPlan.progress)
+    const isCurrent = animated && animationIndex === animationPlan.progress - 1
+    const cellOpacity = isRevealed ? visual.opacity : 0.08
+    const cellStroke = isCurrent ? '#020617' : 'none'
+    const cellStrokeWidth = isCurrent ? 0.05 : 0
 
     return `
       <g>
@@ -1018,17 +1268,23 @@ function renderMatrix() {
           height="1"
           rx="0.08"
           fill="${visual.fill}"
-          fill-opacity="${visual.opacity}"
-          stroke="none"
+          fill-opacity="${cellOpacity}"
+          stroke="${cellStroke}"
+          stroke-width="${cellStrokeWidth}"
+          ${animated && !isRevealed ? 'data-animated-hidden="true"' : ''}
+          ${isCurrent ? 'data-animated-current="true"' : ''}
+          pointer-events="${isRevealed ? 'auto' : 'none'}"
         />
       </g>
     `
   }).join('')
 
   const selectionHighlights = state.analysis.modules.map((module) => {
+    const animationIndex = animationPlan.indexByKey.get(module.key)
+    const isRevealed = !animated || (animationIndex != null && animationIndex < animationPlan.progress)
     const isPinned = state.activeSelection?.type === 'module' && state.activeSelection.id === module.key
     const isHovered = state.hoveredModuleKey === module.key
-    if (!isPinned && !isHovered) return ''
+    if ((!isPinned && !isHovered) || !isRevealed) return ''
 
     const stroke = isPinned ? '#020617' : '#1d4ed8'
     const haloStroke = isPinned ? 'rgba(255, 255, 255, 0.98)' : 'rgba(255, 255, 255, 0.92)'
@@ -1066,6 +1322,10 @@ function renderMatrix() {
   }).join('')
 
   const matrixLabels = state.analysis.modules.map((module) => {
+    const animationIndex = animationPlan.indexByKey.get(module.key)
+    const isRevealed = !animated || (animationIndex != null && animationIndex < animationPlan.progress)
+    if (!isRevealed) return ''
+
     const orderLabel = overlay.placementLabels.get(module.key)
     const bitTriplet = overlay.bitTriplets.get(module.key)
     const labelColor = module.isDark ? '#fffdf8' : '#111827'
@@ -1782,9 +2042,11 @@ function render() {
   renderPayloadGroups()
   renderBlocks()
   renderInspector()
+  updateAnimationButtons()
 }
 
 textInput.addEventListener('input', (event) => {
+  stopAnimation({ reset: true })
   state.text = event.target.value
   state.maskDetailPattern = null
   state.hoveredModuleKey = null
@@ -1792,6 +2054,7 @@ textInput.addEventListener('input', (event) => {
 })
 
 eccSelect.addEventListener('change', (event) => {
+  stopAnimation({ reset: true })
   state.errorCorrectionLevel = event.target.value
   state.maskDetailPattern = null
   state.hoveredModuleKey = null
@@ -1810,6 +2073,10 @@ clearFocusButton.addEventListener('click', () => {
   state.hoveredModuleKey = null
   render()
 })
+
+animateButton.addEventListener('click', toggleAnimation)
+singleStepButton.addEventListener('click', advanceSingleStep)
+groupStepButton.addEventListener('click', advanceGroupStep)
 
 function bindSelectionPanel(panel) {
   panel.addEventListener('click', (event) => {

@@ -167,6 +167,13 @@ button {
   margin-bottom: 18px;
 }
 
+.panel-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .panel-head h2,
 .summary-card strong,
 .flow-card strong,
@@ -185,6 +192,12 @@ button {
   border-radius: 999px;
   padding: 10px 14px;
   background: rgba(255, 255, 255, 0.72);
+}
+
+.ghost-button.is-active {
+  background: linear-gradient(135deg, #2563eb, #38bdf8);
+  border-color: rgba(37, 99, 235, 0.48);
+  color: white;
 }
 
 .field {
@@ -391,6 +404,19 @@ button {
 
 .matrix-svg rect[data-module-key] {
   cursor: pointer;
+  transition:
+    fill-opacity 180ms ease,
+    opacity 180ms ease,
+    stroke 180ms ease,
+    stroke-width 180ms ease;
+}
+
+.matrix-svg rect[data-module-key][data-animated-hidden="true"] {
+  cursor: not-allowed;
+}
+
+.matrix-svg rect[data-module-key][data-animated-current="true"] {
+  paint-order: stroke fill;
 }
 
 .matrix-label {
