@@ -1,7 +1,8 @@
 import './styles.css'
 import { analyzeQr, explainMaskAt } from './qr-analysis.js'
+import FormatInfo from 'qrcode/lib/core/format-info.js'
 
-const SAMPLE_TEXT = 'HELLO QR 2026'
+const SAMPLE_TEXT = 'https://rakshithnettar.com'
 
 const SEGMENT_COLORS = [
   '#ff5d73',
@@ -83,7 +84,6 @@ const state = {
   text: SAMPLE_TEXT,
   errorCorrectionLevel: 'M',
   overlayMode: 'structure',
-  showPlacementPath: false,
   maskDetailPattern: null,
   activeSelection: null,
   hoveredModuleKey: null,
@@ -172,13 +172,10 @@ app.innerHTML = `
               <p class="eyebrow">Exploded view</p>
               <h2>Interactive module map</h2>
             </div>
-            <button id="placementPathToggle" class="ghost-button toggle-button" type="button" aria-pressed="false">
-              Placement path off
-            </button>
           </div>
           <div id="matrixShell" class="matrix-shell"></div>
           <p class="hint">
-            Hover or click a cell to inspect it. Click legend items, segments, or blocks to focus the overlay.
+            Hover or click a cell to inspect it. With nothing selected, every writable cell shows its placement number.
           </p>
         </article>
       </section>
@@ -256,7 +253,6 @@ const statusPanel = document.querySelector('#statusPanel')
 const summaryGrid = document.querySelector('#summaryGrid')
 const scanCanvas = document.querySelector('#scanCanvas')
 const matrixShell = document.querySelector('#matrixShell')
-const placementPathToggle = document.querySelector('#placementPathToggle')
 const maskingPanel = document.querySelector('#maskingPanel')
 const legendPanel = document.querySelector('#legendPanel')
 const segmentsPanel = document.querySelector('#segmentsPanel')
@@ -426,13 +422,8 @@ function getModuleVisual(module) {
     fill = mixHex(baseColor, '#fffdf8', 0.55)
   }
 
-  if (state.showPlacementPath && module.rawValue == null && !isPinned && !isHovered) {
-    fill = module.isDark ? mixHex(fill, '#fffdf8', 0.3) : mixHex(fill, '#fffdf8', 0.12)
-    opacity *= 0.82
-  }
-
-  const stroke = isPinned ? '#111827' : (isHovered ? '#1d4ed8' : 'none')
-  const strokeWidth = isPinned ? 0.18 : (isHovered ? 0.12 : 0)
+  const stroke = isPinned ? '#020617' : (isHovered ? '#1d4ed8' : 'none')
+  const strokeWidth = isPinned ? 0.22 : (isHovered ? 0.12 : 0)
 
   return {
     fill,
@@ -518,11 +509,21 @@ function shouldShowDetailedBitLabels(selection, modules) {
 }
 
 function getActiveMatrixOverlay() {
-  if (!state.analysis || !state.activeSelection) {
+  if (!state.analysis) {
     return {
       placementLabels: new Map(),
       bitTriplets: new Map(),
       selectedCount: 0,
+      hasDetailedBits: false
+    }
+  }
+
+  if (!state.activeSelection) {
+    const allPlacedModules = getPlacementOrderedModules()
+    return {
+      placementLabels: new Map(allPlacedModules.map((module, index) => [module.key, String(index + 1)])),
+      bitTriplets: new Map(),
+      selectedCount: allPlacedModules.length,
       hasDetailedBits: false
     }
   }
@@ -557,46 +558,6 @@ function getPlacementMarkerInterval(total) {
   if (total <= 120) return 12
   if (total <= 260) return 18
   return Math.max(24, Math.ceil(total / 14))
-}
-
-function getPlacementPathOverlay() {
-  if (!state.analysis || !state.showPlacementPath) {
-    return null
-  }
-
-  const modules = getPlacementOrderedModules()
-  if (!modules.length) return null
-
-  const interval = getPlacementMarkerInterval(modules.length)
-  const path = modules
-    .map((module, index) => `${index === 0 ? 'M' : 'L'} ${module.col + 0.5} ${module.row + 0.5}`)
-    .join(' ')
-
-  const turnPlacements = new Set()
-  for (let index = 1; index < modules.length - 1; index++) {
-    const previous = modules[index - 1]
-    const current = modules[index]
-    const next = modules[index + 1]
-    const deltaA = `${current.row - previous.row},${current.col - previous.col}`
-    const deltaB = `${next.row - current.row},${next.col - current.col}`
-
-    if (deltaA !== deltaB) {
-      turnPlacements.add(current.placementIndex)
-    }
-  }
-
-  const anchors = modules.filter((module) => (
-    module.placementIndex <= 4 ||
-    module.placementIndex === modules.length ||
-    module.placementIndex % interval === 0
-  ))
-
-  return {
-    path,
-    interval,
-    anchors,
-    turns: modules.filter((module) => turnPlacements.has(module.placementIndex))
-  }
 }
 
 function getModuleBitLabel(module) {
@@ -720,6 +681,57 @@ function getPaddingContextInfo(module) {
   }
 
   return null
+}
+
+function getFormatCellInfo(module) {
+  if (!state.analysis || module.focusKey !== 'format') return null
+
+  const size = state.analysis.size
+  const row = module.row
+  const col = module.col
+  let bitIndex = null
+  let copy = null
+
+  if (col === 8) {
+    copy = 'vertical copy'
+    if (row <= 5) {
+      bitIndex = row
+    } else if (row === 7) {
+      bitIndex = 6
+    } else if (row === 8) {
+      bitIndex = 7
+    } else if (row >= size - 7) {
+      bitIndex = row - (size - 15)
+    }
+  } else if (row === 8) {
+    copy = 'horizontal copy'
+    if (col >= size - 8) {
+      bitIndex = size - col - 1
+    } else if (col === 7) {
+      bitIndex = 8
+    } else if (col <= 5) {
+      bitIndex = 14 - col
+    }
+  }
+
+  if (bitIndex == null) return null
+
+  const encodedBits = FormatInfo.getEncodedBits(state.analysis.errorCorrectionLevel, state.analysis.maskPattern)
+    .toString(2)
+    .padStart(15, '0')
+    .split('')
+    .reverse()
+
+  return {
+    bitIndex,
+    copy,
+    totalBits: 15,
+    encodedBit: encodedBits[bitIndex] || '0',
+    ecLevel: state.analysis.errorCorrectionLevel,
+    maskPattern: state.analysis.maskPattern,
+    description: `Format info is a 15-bit structural field generated from error correction level ${state.analysis.errorCorrectionLevel} and mask pattern ${state.analysis.maskPattern}. The same 15 bits are written twice: once in the vertical strip by column 8 and once in the horizontal strip by row 8. This cell is bit ${bitIndex + 1} of that field in the ${copy}.`,
+    entry: `The encoder writes the format bits directly into reserved cells. They are not treated as payload and they are not masked again by the data mask step.`
+  }
 }
 
 function getPadInfo(module) {
@@ -993,13 +1005,8 @@ function renderMatrix() {
 
   const size = state.analysis.size
   const overlay = getActiveMatrixOverlay()
-  const placementOverlay = getPlacementPathOverlay()
   const cells = state.analysis.modules.map((module) => {
     const visual = getModuleVisual(module)
-    const orderLabel = overlay.placementLabels.get(module.key)
-    const bitTriplet = overlay.bitTriplets.get(module.key)
-    const labelColor = module.isDark ? '#fffdf8' : '#111827'
-    const labelStroke = module.isDark ? 'rgba(17, 24, 39, 0.8)' : 'rgba(255, 253, 248, 0.92)'
 
     return `
       <g>
@@ -1012,10 +1019,49 @@ function renderMatrix() {
           rx="0.08"
           fill="${visual.fill}"
           fill-opacity="${visual.opacity}"
-          stroke="${visual.stroke}"
-          stroke-width="${visual.strokeWidth}"
+          stroke="none"
         />
       </g>
+    `
+  }).join('')
+
+  const selectionHighlights = state.analysis.modules.map((module) => {
+    const isPinned = state.activeSelection?.type === 'module' && state.activeSelection.id === module.key
+    const isHovered = state.hoveredModuleKey === module.key
+    if (!isPinned && !isHovered) return ''
+
+    const stroke = isPinned ? '#020617' : '#1d4ed8'
+    const haloStroke = isPinned ? 'rgba(255, 255, 255, 0.98)' : 'rgba(255, 255, 255, 0.92)'
+    const haloWidth = isPinned ? 0.26 : 0.16
+    const strokeWidth = isPinned ? 0.18 : 0.08
+    const inset = isPinned ? 0.005 : 0.03
+
+    return `
+      <rect
+        x="${module.col + inset}"
+        y="${module.row + inset}"
+        width="${1 - inset * 2}"
+        height="${1 - inset * 2}"
+        rx="0.12"
+        fill="none"
+        stroke="${haloStroke}"
+        stroke-width="${haloWidth}"
+        pointer-events="none"
+        vector-effect="non-scaling-stroke"
+      />
+      <rect
+        x="${module.col + inset}"
+        y="${module.row + inset}"
+        width="${1 - inset * 2}"
+        height="${1 - inset * 2}"
+        rx="0.1"
+        fill="${isPinned ? 'rgba(2, 6, 23, 0.18)' : 'rgba(29, 78, 216, 0.08)'}"
+        stroke="${stroke}"
+        stroke-width="${strokeWidth}"
+        ${isPinned ? 'filter="url(#selectedCellShadow)"' : ''}
+        pointer-events="none"
+        vector-effect="non-scaling-stroke"
+      />
     `
   }).join('')
 
@@ -1057,47 +1103,6 @@ function renderMatrix() {
     `
   }).join('')
 
-  const placementPathLayer = placementOverlay ? `
-    <g class="placement-path-layer" pointer-events="none">
-      <path class="placement-path-trace" d="${placementOverlay.path}"></path>
-      ${placementOverlay.turns.map((module) => `
-        <circle
-          class="placement-turn"
-          cx="${module.col + 0.5}"
-          cy="${module.row + 0.5}"
-          r="0.22"
-        ></circle>
-      `).join('')}
-      ${placementOverlay.anchors.map((module) => {
-        const label = String(module.placementIndex)
-        const width = Math.max(0.82, label.length * 0.24 + 0.36)
-        const classes = [
-          'placement-anchor',
-          module.placementIndex === 1 ? 'placement-anchor-start' : '',
-          module.placementIndex === state.analysis.placement.totalTraversedCells ? 'placement-anchor-end' : ''
-        ].filter(Boolean).join(' ')
-
-        return `
-          <g class="${classes}" transform="translate(${module.col + 0.5} ${module.row + 0.5})">
-            <rect x="${-(width / 2)}" y="-0.3" width="${width}" height="0.6" rx="0.3"></rect>
-            <text text-anchor="middle" dominant-baseline="middle" y="0.02">${label}</text>
-          </g>
-        `
-      }).join('')}
-    </g>
-  ` : ''
-
-  const placementNote = placementOverlay ? `
-    <div class="matrix-path-note">
-      <strong>Placement path</strong>
-      <p>${escapeHtml(state.analysis.placement.pathRule)}</p>
-      <p>
-        Number badges sample the full ${state.analysis.placement.totalTraversedCells}-cell walk.
-        Hollow rings mark turns where the path hits an edge or shifts into the next two-column stripe.
-      </p>
-    </div>
-  ` : ''
-
   matrixShell.innerHTML = `
     <div class="matrix-frame">
       <svg
@@ -1105,13 +1110,17 @@ function renderMatrix() {
         viewBox="-2 -2 ${size + 4} ${size + 4}"
         aria-label="Interactive QR code module map"
       >
+        <defs>
+          <filter id="selectedCellShadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="0" stdDeviation="0.08" flood-color="#020617" flood-opacity="0.6" />
+          </filter>
+        </defs>
         <rect x="-2" y="-2" width="${size + 4}" height="${size + 4}" rx="1.6" fill="#fffdf8"></rect>
         ${cells}
-        ${placementPathLayer}
+        ${selectionHighlights}
         ${matrixLabels}
       </svg>
     </div>
-    ${placementNote}
   `
 }
 
@@ -1556,6 +1565,7 @@ function renderInspector() {
   const isPinned = state.activeSelection?.type === 'module' && state.activeSelection.id === module.key
   const activeGroupOrder = getActiveGroupOrder(module)
   const countFieldInfo = getCountFieldInfo(module, segment)
+  const formatInfo = getFormatCellInfo(module)
   const payloadGroup = chunk && segment ? getPayloadGroupById(getChunkSelectionId(segment.id, chunk.index)) : null
   const padInfo = getPadInfo(module)
   const errorCorrectionInfo = getErrorCorrectionInfo(module)
@@ -1589,6 +1599,24 @@ function renderInspector() {
             the count field is ${countFieldInfo.width} bits wide. This segment contains ${segment.length}
             ${countFieldInfo.unitLabel}, so the raw count bits are <span class="mono">${countFieldInfo.rawBits}</span>.
           </p>
+        </div>
+      ` : ''}
+
+      ${formatInfo ? `
+        <div class="subnote">
+          <strong>Format Info</strong>
+          <p>
+            ${escapeHtml(formatInfo.description)}
+          </p>
+          <p>
+            The bit stored here is <span class="mono">${formatInfo.encodedBit}</span>. ${escapeHtml(formatInfo.entry)}
+          </p>
+          <div class="inspect-grid">
+            <div><span>Bit</span><strong>${formatInfo.bitIndex + 1} of ${formatInfo.totalBits}</strong></div>
+            <div><span>Copy</span><strong>${formatInfo.copy}</strong></div>
+            <div><span>EC Level</span><strong>${formatInfo.ecLevel}</strong></div>
+            <div><span>Mask Pattern</span><strong>${formatInfo.maskPattern}</strong></div>
+          </div>
         </div>
       ` : ''}
 
@@ -1743,9 +1771,6 @@ function render() {
   overlayModes.querySelectorAll('button').forEach((button) => {
     button.classList.toggle('active', button.dataset.mode === state.overlayMode)
   })
-  placementPathToggle.classList.toggle('active', state.showPlacementPath)
-  placementPathToggle.setAttribute('aria-pressed', String(state.showPlacementPath))
-  placementPathToggle.textContent = state.showPlacementPath ? 'Placement path on' : 'Placement path off'
 
   renderStatus()
   renderSummary()
@@ -1777,11 +1802,6 @@ overlayModes.addEventListener('click', (event) => {
   const button = event.target.closest('button[data-mode]')
   if (!button) return
   state.overlayMode = button.dataset.mode
-  render()
-})
-
-placementPathToggle.addEventListener('click', () => {
-  state.showPlacementPath = !state.showPlacementPath
   render()
 })
 

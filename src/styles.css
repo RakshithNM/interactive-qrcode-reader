@@ -187,12 +187,6 @@ button {
   background: rgba(255, 255, 255, 0.72);
 }
 
-.toggle-button.active {
-  background: linear-gradient(135deg, #1d4ed8, #06b6d4);
-  color: white;
-  border-color: rgba(29, 78, 216, 0.28);
-}
-
 .field {
   display: grid;
   gap: 8px;
@@ -395,6 +389,10 @@ button {
   overflow: visible;
 }
 
+.matrix-svg rect[data-module-key] {
+  cursor: pointer;
+}
+
 .matrix-label {
   font-family: var(--mono);
   font-weight: 700;
@@ -413,61 +411,6 @@ button {
 .matrix-label-bits {
   font-size: 0.16px;
   letter-spacing: -0.08em;
-}
-
-.placement-path-trace {
-  fill: none;
-  stroke: rgba(15, 23, 42, 0.42);
-  stroke-width: 0.16;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.placement-turn {
-  fill: rgba(255, 255, 255, 0.9);
-  stroke: rgba(249, 115, 22, 0.92);
-  stroke-width: 0.08;
-}
-
-.placement-anchor rect {
-  fill: rgba(255, 248, 235, 0.96);
-  stroke: rgba(15, 23, 42, 0.74);
-  stroke-width: 0.05;
-}
-
-.placement-anchor text {
-  font-family: var(--mono);
-  font-size: 0.18px;
-  font-weight: 700;
-  fill: #111827;
-}
-
-.placement-anchor-start rect {
-  fill: rgba(16, 185, 129, 0.18);
-  stroke: rgba(5, 150, 105, 0.88);
-}
-
-.placement-anchor-end rect {
-  fill: rgba(59, 130, 246, 0.18);
-  stroke: rgba(29, 78, 216, 0.9);
-}
-
-.matrix-path-note {
-  border-radius: 18px;
-  padding: 14px 16px;
-  border: 1px solid rgba(31, 41, 55, 0.08);
-  background: rgba(255, 255, 255, 0.74);
-  display: grid;
-  gap: 8px;
-}
-
-.matrix-path-note strong {
-  font-size: 0.96rem;
-}
-
-.matrix-path-note p {
-  margin: 0;
-  color: var(--ink-soft);
 }
 
 .hint {
