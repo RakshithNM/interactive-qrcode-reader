@@ -207,7 +207,7 @@ app.innerHTML = `
         <article class="panel">
           <div class="panel-head">
             <div>
-              <p class="eyebrow">Step 1.5</p>
+              <p class="eyebrow">Step 2</p>
               <h2>Payload Groups</h2>
             </div>
           </div>
@@ -217,7 +217,7 @@ app.innerHTML = `
         <article class="panel">
           <div class="panel-head">
             <div>
-              <p class="eyebrow">Step 2</p>
+              <p class="eyebrow">Step 3</p>
               <h2>Blocks</h2>
             </div>
           </div>
@@ -227,7 +227,7 @@ app.innerHTML = `
         <article class="panel">
           <div class="panel-head">
             <div>
-              <p class="eyebrow">Inspector</p>
+              <p class="eyebrow">Step 4</p>
               <h2>Selected detail</h2>
             </div>
           </div>
@@ -238,21 +238,11 @@ app.innerHTML = `
       <section class="panel masking-panel">
         <div class="panel-head">
           <div>
-            <p class="eyebrow">Step 3.5</p>
+            <p class="eyebrow">Step 5</p>
             <h2>Masking</h2>
           </div>
         </div>
         <div id="maskingPanel" class="mask-grid"></div>
-      </section>
-
-      <section class="panel flow-panel">
-        <div class="panel-head">
-          <div>
-            <p class="eyebrow">Build trail</p>
-            <h2>How this QR was generated</h2>
-          </div>
-        </div>
-        <div id="flowPanel" class="flow-grid"></div>
       </section>
     </div>
   </div>
@@ -273,7 +263,6 @@ const segmentsPanel = document.querySelector('#segmentsPanel')
 const payloadGroupsPanel = document.querySelector('#payloadGroupsPanel')
 const blocksPanel = document.querySelector('#blocksPanel')
 const inspectorPanel = document.querySelector('#inspectorPanel')
-const flowPanel = document.querySelector('#flowPanel')
 
 textInput.value = state.text
 eccSelect.value = state.errorCorrectionLevel
@@ -759,6 +748,34 @@ function getPadInfo(module) {
     prePadBits,
     paddedBits,
     dataCapacityBits: stats.dataCapacityBits
+  }
+}
+
+function getErrorCorrectionInfo(module) {
+  if (!state.analysis || module.focusKey !== 'error-correction' || module.source?.kind !== 'error-correction') {
+    return null
+  }
+
+  const block = getBlockById(module.blockId)
+  if (!block) return null
+
+  const codeword = block.errorCodewords[module.source.localCodewordIndex]
+  if (!codeword) return null
+
+  return {
+    blockLabel: block.label,
+    blockGroup: block.group,
+    dataCodewordCount: block.dataCodewordCount,
+    errorCodewordCount: block.errorCodewordCount,
+    codewordIndex: module.source.localCodewordIndex + 1,
+    totalBlocks: state.analysis.blocks.length,
+    ecLevel: state.analysis.errorCorrectionLevel,
+    value: codeword.value,
+    bits: codeword.bits,
+    byteHex: formatHexByte(codeword.value),
+    bitPosition: module.source.codewordBitIndex != null
+      ? module.source.codewordBitIndex + 1
+      : (module.source.fieldBitIndex != null ? module.source.fieldBitIndex + 1 : null)
   }
 }
 
@@ -1267,8 +1284,7 @@ function renderSegments() {
       .map((blockId) => getBlockById(blockId)?.label)
       .filter(Boolean)
       .join(' · ')
-    const chunks = segment.chunks
-      .slice(0, 8)
+    const chunkLabels = segment.chunks
       .map((chunk) => `
         <span class="mini-chip">
           ${escapeHtml(chunk.label)}
@@ -1303,8 +1319,27 @@ function renderSegments() {
           <span>${blockLabels || 'single block'}</span>
         </div>
 
+        <div class="bit-breakdown">
+          <div class="bit-line">
+            <strong>Mode</strong>
+            <span class="mono bit-value">${segment.modeBitString}</span>
+          </div>
+          <div class="bit-line">
+            <strong>Count</strong>
+            <span class="mono bit-value">${segment.countBitString}</span>
+          </div>
+          <div class="bit-line">
+            <strong>Payload</strong>
+            <span class="mono bit-value">${segment.payloadBitString || '—'}</span>
+          </div>
+          <div class="bit-line bit-line-full">
+            <strong>Full segment</strong>
+            <span class="mono bit-value">${segment.fullBitString}</span>
+          </div>
+        </div>
+
         <div class="mini-chip-row">
-          ${chunks}
+          ${chunkLabels}
         </div>
       </button>
     `
@@ -1449,8 +1484,8 @@ function renderSelectionSummary() {
           <div><span>Raw bits</span><strong class="mono">${group.bits}</strong></div>
         </div>
         <div class="subnote">
-          <strong>Step 1.5</strong>
-          <p>The payload-group card in Step 1.5 shows the full encoding path for this group.</p>
+          <strong>Step 2</strong>
+          <p>The payload-group card in Step 2 shows the full encoding path for this group.</p>
         </div>
       </div>
     `
@@ -1488,6 +1523,14 @@ function renderSelectionSummary() {
         ${overlay.placementLabels.size ? `
           <p>${overlay.hasDetailedBits ? 'Each highlighted cell shows placement order on the first line and raw/mask/final bits on the second line, where raw XOR mask = final.' : 'Numbers on the matrix show the order those cells were placed inside this group.'}</p>
         ` : ''}
+        ${key === 'error-correction' ? `
+          <div class="subnote">
+            <strong>Error Correction</strong>
+            <p>
+              QR codes add Reed-Solomon parity after the full data byte stream is built. The data bytes are split into ${state.analysis.blocks.length} block${state.analysis.blocks.length === 1 ? '' : 's'}, each block generates its own parity bytes, then data codewords are interleaved first and error-correction codewords are interleaved after that. These bits are still placed into the matrix and masked like the rest of the writable stream.
+            </p>
+          </div>
+        ` : ''}
       </div>
     `
   }
@@ -1515,6 +1558,7 @@ function renderInspector() {
   const countFieldInfo = getCountFieldInfo(module, segment)
   const payloadGroup = chunk && segment ? getPayloadGroupById(getChunkSelectionId(segment.id, chunk.index)) : null
   const padInfo = getPadInfo(module)
+  const errorCorrectionInfo = getErrorCorrectionInfo(module)
   const paddingContextInfo = getPaddingContextInfo(module)
 
   inspectorPanel.innerHTML = `
@@ -1586,6 +1630,24 @@ function renderInspector() {
         </div>
       ` : ''}
 
+      ${errorCorrectionInfo ? `
+        <div class="subnote">
+          <strong>Error Correction</strong>
+          <p>
+            QR error correction is added after the full data stream is assembled. This QR built the data bytes first, split them into ${errorCorrectionInfo.totalBlocks} block${errorCorrectionInfo.totalBlocks === 1 ? '' : 's'}, then generated Reed-Solomon parity for each block at EC level ${errorCorrectionInfo.ecLevel}.
+          </p>
+          <p>
+            This cell belongs to parity byte ${errorCorrectionInfo.codewordIndex} of ${errorCorrectionInfo.errorCodewordCount} from ${errorCorrectionInfo.blockLabel}. That block started with ${errorCorrectionInfo.dataCodewordCount} data codeword${errorCorrectionInfo.dataCodewordCount === 1 ? '' : 's'}, then the Reed-Solomon remainder produced this parity byte:
+            <span class="mono">${errorCorrectionInfo.byteHex}</span> = <span class="mono">${errorCorrectionInfo.bits}</span>.
+            This module is bit ${errorCorrectionInfo.bitPosition} of that byte.
+          </p>
+          <p>
+            After all data codewords were interleaved, the error-correction codewords were interleaved into the final stream, placed into the QR matrix, and masked just like payload bits:
+            <span class="mono">${module.rawValue} XOR ${module.maskBit} = ${getFinalBit(module)}</span>.
+          </p>
+        </div>
+      ` : ''}
+
       <div class="subnote">
         <strong>What It Represents</strong>
         <p>${escapeHtml(narrative.represents)}</p>
@@ -1623,40 +1685,6 @@ function renderInspector() {
       ` : ''}
     </div>
   `
-}
-
-function renderFlow() {
-  if (!state.analysis) {
-    flowPanel.innerHTML = '<div class="empty-card">The build trail appears once a QR code exists.</div>'
-    return
-  }
-
-  const { stats, segments, blocks, version, maskPattern } = state.analysis
-  const steps = [
-    {
-      label: '1. Segment the text',
-      body: `${segments.length} segment${segments.length === 1 ? '' : 's'} selected across ${segments.map((segment) => segment.mode).join(', ')}.`
-    },
-    {
-      label: '2. Add headers and padding',
-      body: `${stats.segmentBits} payload/header bits, ${stats.terminatorBits} terminator bits, ${stats.alignmentBits} align bits, ${stats.padBytes} pad bytes.`
-    },
-    {
-      label: '3. Split into blocks',
-      body: `${blocks.length} blocks carry ${stats.dataCodewords} data codewords and ${stats.errorCorrectionCodewords} EC codewords.`
-    },
-    {
-      label: '4. Weave the matrix',
-      body: `Version ${version} uses mask pattern ${maskPattern}, chosen because it had the lowest total penalty before the final ${state.analysis.size} × ${state.analysis.size} matrix was locked in.`
-    }
-  ]
-
-  flowPanel.innerHTML = steps.map((step) => `
-    <article class="flow-card">
-      <strong>${step.label}</strong>
-      <p>${step.body}</p>
-    </article>
-  `).join('')
 }
 
 function validateSelection() {
@@ -1729,7 +1757,6 @@ function render() {
   renderPayloadGroups()
   renderBlocks()
   renderInspector()
-  renderFlow()
 }
 
 textInput.addEventListener('input', (event) => {

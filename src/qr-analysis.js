@@ -316,16 +316,20 @@ function buildDataBuffer(segments, version) {
       endChar: charOffset + text.length,
       modeBits: 4,
       charCountBits,
-      startBit
+      startBit,
+      modeBitString: toBits(segment.mode.bit, 4),
+      countBitString: toBits(segment.getLength(), charCountBits)
     }
 
     descriptor.chunks = buildSegmentPayload(segment, descriptor, buffer, sources)
+    descriptor.payloadBitString = descriptor.chunks.map((chunk) => chunk.bits).join('')
     descriptor.endBit = buffer.getLengthInBits()
     descriptor.payloadBits = descriptor.endBit - payloadStart
     descriptor.totalBits = descriptor.endBit - startBit
     descriptor.modeBitRange = [modeStart, countStart]
     descriptor.countBitRange = [countStart, payloadStart]
     descriptor.payloadBitRange = [payloadStart, descriptor.endBit]
+    descriptor.fullBitString = `${descriptor.modeBitString}${descriptor.countBitString}${descriptor.payloadBitString}`
 
     charOffset += text.length
 

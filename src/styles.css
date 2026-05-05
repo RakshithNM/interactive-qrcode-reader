@@ -1,12 +1,12 @@
 :root {
   color-scheme: light;
-  --bg: #fff5e9;
-  --bg-strong: #ffd7b0;
+  --bg: #eef6ff;
+  --bg-strong: #cfe4ff;
   --ink: #1f2937;
   --ink-soft: #5b6474;
-  --panel: rgba(255, 253, 248, 0.82);
+  --panel: rgba(247, 251, 255, 0.84);
   --panel-border: rgba(31, 41, 55, 0.1);
-  --shadow: 0 22px 60px rgba(255, 124, 67, 0.14);
+  --shadow: 0 22px 60px rgba(59, 130, 246, 0.14);
   --radius-xl: 28px;
   --radius-lg: 22px;
   --radius-md: 16px;
@@ -28,9 +28,9 @@ body {
   font-family: var(--sans);
   color: var(--ink);
   background:
-    radial-gradient(circle at top left, rgba(255, 176, 86, 0.34), transparent 28%),
-    radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 22%),
-    linear-gradient(180deg, #fff7ee 0%, #fff0da 46%, #fff7ef 100%);
+    radial-gradient(circle at top left, rgba(96, 165, 250, 0.3), transparent 28%),
+    radial-gradient(circle at top right, rgba(34, 211, 238, 0.2), transparent 24%),
+    linear-gradient(180deg, #f5faff 0%, #e8f1ff 46%, #f6fbff 100%);
 }
 
 button,
@@ -63,7 +63,7 @@ button {
   display: grid;
   gap: 18px;
   background:
-    linear-gradient(135deg, rgba(255, 210, 163, 0.94), rgba(255, 250, 243, 0.9)),
+    linear-gradient(135deg, rgba(202, 227, 255, 0.95), rgba(247, 251, 255, 0.92)),
     var(--panel);
 }
 
@@ -99,7 +99,7 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.18em;
   font-size: 0.76rem;
-  color: #ef6c2d;
+  color: #2563eb;
   font-weight: 700;
 }
 
@@ -111,8 +111,7 @@ button {
 .control-strip,
 .summary-grid,
 .view-grid,
-.details-grid,
-.flow-grid {
+.details-grid {
   display: grid;
   gap: 12px;
 }
@@ -144,7 +143,6 @@ button {
 
 .controls-panel,
 .viewer-panel,
-.flow-panel,
 .summary-card,
 .panel > .panel-head + * {
   min-width: 0;
@@ -157,7 +155,6 @@ button {
 .controls-panel,
 .viewer-panel,
 .masking-panel,
-.flow-panel,
 .details-grid > .panel {
   padding: 22px;
 }
@@ -271,7 +268,7 @@ button {
 }
 
 .mode-switch button.active {
-  background: linear-gradient(135deg, #ef6c2d, #ffb703);
+  background: linear-gradient(135deg, #2563eb, #38bdf8);
   color: white;
 }
 
@@ -366,7 +363,7 @@ button {
   place-items: center;
   border-radius: calc(var(--radius-lg) - 4px);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 248, 238, 0.92));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(241, 247, 255, 0.94));
   border: 1px solid rgba(31, 41, 55, 0.08);
 }
 
@@ -585,6 +582,39 @@ button {
   grid-template-columns: repeat(auto-fit, minmax(78px, max-content));
 }
 
+.bit-breakdown {
+  display: grid;
+  gap: 8px;
+}
+
+.bit-line {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(31, 41, 55, 0.08);
+}
+
+.bit-line strong {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+}
+
+.bit-value {
+  display: block;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bit-line-full .bit-value {
+  font-size: 0.8rem;
+}
+
 .mini-chip {
   padding: 7px 10px;
   font-family: var(--mono);
@@ -635,22 +665,6 @@ button {
   margin: 0;
 }
 
-.flow-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.flow-card {
-  padding: 18px;
-  border-radius: 20px;
-  border: 1px solid rgba(31, 41, 55, 0.08);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 244, 233, 0.88));
-}
-
-.flow-card p {
-  margin: 10px 0 0;
-}
-
 .mask-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -664,7 +678,7 @@ button {
   border-radius: 20px;
   border: 1px solid rgba(31, 41, 55, 0.08);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 244, 233, 0.88));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(238, 246, 255, 0.9));
 }
 
 .mask-summary-card {
@@ -770,7 +784,6 @@ button {
   .summary-grid,
   .view-grid,
   .details-grid,
-  .flow-grid,
   .mask-grid,
   .mask-metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -786,7 +799,6 @@ button {
   .hero,
   .controls-panel,
   .viewer-panel,
-  .flow-panel,
   .details-grid > .panel {
     padding: 18px;
   }
@@ -794,7 +806,6 @@ button {
   .summary-grid,
   .view-grid,
   .details-grid,
-  .flow-grid,
   .mask-grid,
   .mask-metric-grid,
   .token-grid,
