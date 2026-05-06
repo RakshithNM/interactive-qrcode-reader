@@ -260,15 +260,15 @@ app.innerHTML = `
           <p class="eyebrow">Read more</p>
           <h2>Blog posts and the QR series</h2>
           <p>
-            Start with the interactive QR reader write-up, then continue with the Read QR by logic series.
+            Start with the interactive QR reader write-up, then continue with the Read QR code by logic series.
           </p>
           <div class="footer-link-list">
             <a class="footer-text-link" href="https://blog.rakshithnettar.com/building-an-interactive-qr-code-reader-that-explains-itself/" target="_blank" rel="noreferrer">Interactive QR reader write-up</a>
-            <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-by-logic-part-1-the-building-blocks/" target="_blank" rel="noreferrer">Part 1: Building blocks</a>
-            <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-by-logic-part-2-payload-groups-placement-and-pad-bytes/" target="_blank" rel="noreferrer">Part 2: Payload, placement, and pad bytes</a>
-            <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-by-logic-part-3-reed-solomon-error-correction/" target="_blank" rel="noreferrer">Part 3: Error correction</a>
-            <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-by-logic-part-4-masking-the-matrix/" target="_blank" rel="noreferrer">Part 4: Masking</a>
-            <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-by-logic-part-5-the-other-qr-groups/" target="_blank" rel="noreferrer">Part 5: Other QR groups</a>
+            <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-1-the-building-blocks/" target="_blank" rel="noreferrer">Part 1: Building blocks</a>
+            <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-2-payload-groups-placement-and-pad-bytes/" target="_blank" rel="noreferrer">Part 2: Payload, placement, and pad bytes</a>
+            <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-3-reed-solomon-error-correction/" target="_blank" rel="noreferrer">Part 3: Error correction</a>
+            <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-4-masking-the-matrix/" target="_blank" rel="noreferrer">Part 4: Masking</a>
+            <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-5-the-other-qr-groups/" target="_blank" rel="noreferrer">Part 5: Other QR groups</a>
           </div>
         </div>
       </footer>
