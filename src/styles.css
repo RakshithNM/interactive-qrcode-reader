@@ -165,9 +165,8 @@ button {
 }
 
 .footer-link-list {
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
+  display: grid;
+  gap: 6px;
   color: var(--ink-soft);
 }
 
