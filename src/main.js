@@ -100,179 +100,329 @@ const state = {
 }
 
 app.innerHTML = `
-  <div class="page-shell">
-    <section class="hero panel">
-      <div class="hero-copy">
-        <p class="eyebrow">Interactive QR Reader</p>
-        <h1>Watch text turn into a real QR code, then inspect every group, block, and module.</h1>
-        <p class="lede">
-          Type a message, scan the live QR, then click segments, blocks, or individual cells
-          to see how the symbol is assembled.
-        </p>
+  <div class="site-shell">
+    <div class="announcement-bar">
+      <div class="announcement-inner">
+        <p>Interactive QR Reader lets you generate a live QR code and inspect every segment, block, and mask in one place.</p>
+        <a href="#workbench">Learn more</a>
       </div>
-      <div class="hero-badges">
-        <span class="hero-pill">Scannable output</span>
-        <span class="hero-pill">Colorful overlay</span>
-        <span class="hero-pill">Block-level breakdown</span>
-      </div>
-    </section>
-
-    <div class="workspace">
-      <section class="panel controls-panel">
-        <div class="panel-head">
-          <div>
-            <p class="eyebrow">Input</p>
-            <h2>Payload and controls</h2>
-          </div>
-          <button id="clearFocusButton" class="ghost-button" type="button">Clear focus</button>
-        </div>
-
-        <label class="field">
-          <span>Text</span>
-          <textarea id="textInput" rows="5" maxlength="160" spellcheck="false"></textarea>
-        </label>
-
-        <div class="control-strip">
-          <label class="field compact">
-            <span>Error correction</span>
-            <select id="eccSelect">
-              <option value="L">L · low</option>
-              <option value="M">M · medium</option>
-              <option value="Q">Q · quartile</option>
-              <option value="H">H · high</option>
-            </select>
-          </label>
-
-          <div class="field compact">
-            <span>Overlay mode</span>
-            <div id="overlayModes" class="mode-switch">
-              <button type="button" data-mode="structure">Structure</button>
-              <button type="button" data-mode="segments">Segments</button>
-              <button type="button" data-mode="blocks">Blocks</button>
-            </div>
-          </div>
-        </div>
-
-        <div id="statusPanel" class="status-panel"></div>
-      </section>
-
-      <section class="summary-grid" id="summaryGrid"></section>
-
-      <section class="view-grid">
-        <article class="panel viewer-panel">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">Scan-ready</p>
-              <h2>Live QR code</h2>
-            </div>
-          </div>
-          <div class="canvas-frame">
-            <canvas id="scanCanvas"></canvas>
-          </div>
-          <p class="hint">
-            This view stays high-contrast and includes a quiet zone so it remains easy to scan.
-          </p>
-        </article>
-
-        <article class="panel viewer-panel">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">Exploded view</p>
-              <h2>Interactive module map</h2>
-            </div>
-            <div class="panel-actions">
-              <button id="animateButton" class="ghost-button" type="button">Animate fill</button>
-              <button id="singleStepButton" class="ghost-button" type="button">Single step</button>
-              <button id="groupStepButton" class="ghost-button" type="button">Group step</button>
-            </div>
-          </div>
-          <div id="matrixShell" class="matrix-shell"></div>
-          <p class="hint">
-            Hover or click a cell to inspect it. With nothing selected, every writable cell shows its placement number.
-          </p>
-        </article>
-      </section>
-
-      <section class="details-grid">
-        <article class="panel">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">Legend</p>
-              <h2>QR groups</h2>
-            </div>
-          </div>
-          <div id="legendPanel" class="token-grid"></div>
-        </article>
-
-        <article class="panel">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">Step 1</p>
-              <h2>Segments</h2>
-            </div>
-          </div>
-          <div id="segmentsPanel" class="stack-list"></div>
-        </article>
-
-        <article class="panel">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">Step 2</p>
-              <h2>Payload Groups</h2>
-            </div>
-          </div>
-          <div id="payloadGroupsPanel" class="stack-list"></div>
-        </article>
-
-        <article class="panel">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">Step 3</p>
-              <h2>Blocks</h2>
-            </div>
-          </div>
-          <div id="blocksPanel" class="stack-list"></div>
-        </article>
-
-        <article class="panel">
-          <div class="panel-head">
-            <div>
-              <p class="eyebrow">Step 4</p>
-              <h2>Selected detail</h2>
-            </div>
-          </div>
-          <div id="inspectorPanel" class="inspector"></div>
-        </article>
-      </section>
-
-      <section class="panel masking-panel">
-        <div class="panel-head">
-          <div>
-            <p class="eyebrow">Step 5</p>
-            <h2>Masking</h2>
-          </div>
-        </div>
-        <div id="maskingPanel" class="mask-grid"></div>
-      </section>
-
-      <footer class="panel footer-panel">
-        <div class="footer-copy">
-          <p class="eyebrow">Read more</p>
-          <h2>Blog posts and the QR series</h2>
-          <p>
-            Start with the interactive QR reader write-up, then continue with the Read QR code by logic series.
-          </p>
-          <div class="footer-link-list">
-            <a class="footer-text-link" href="https://blog.rakshithnettar.com/building-an-interactive-qr-code-reader-that-explains-itself/" target="_blank" rel="noreferrer">Interactive QR reader write-up</a>
-            <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-1-the-building-blocks/" target="_blank" rel="noreferrer">Part 1: Building blocks</a>
-            <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-2-payload-groups-placement-and-pad-bytes/" target="_blank" rel="noreferrer">Part 2: Payload, placement, and pad bytes</a>
-            <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-3-reed-solomon-error-correction/" target="_blank" rel="noreferrer">Part 3: Error correction</a>
-            <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-4-masking-the-matrix/" target="_blank" rel="noreferrer">Part 4: Masking</a>
-            <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-5-the-other-qr-groups/" target="_blank" rel="noreferrer">Part 5: Other QR groups</a>
-          </div>
-        </div>
-      </footer>
     </div>
+
+    <header class="global-nav">
+      <div class="global-nav-inner">
+        <a class="global-mark" href="#overview" aria-label="Interactive QR Reader home">Interactive QR Reader</a>
+        <nav class="global-nav-links" aria-label="Global navigation">
+          <a href="#overview">Overview</a>
+          <a href="#workbench">Workbench</a>
+          <a href="#inspect">Inspect</a>
+          <a href="#reed-solomon">Error correction</a>
+          <a href="#masking">Masking</a>
+          <a href="#read-more">Resources</a>
+        </nav>
+        <div class="global-nav-actions">
+          <a class="nav-utility-link" href="https://blog.rakshithnettar.com/building-an-interactive-qr-code-reader-that-explains-itself/" target="_blank" rel="noreferrer">Write-up</a>
+          <a class="button-primary button-primary-nav" href="#workbench">Open reader</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero-section" id="overview">
+        <div class="container hero-shell">
+          <div class="hero-copy">
+            <p class="eyebrow">Learn QR Code Logic</p>
+            <h1>Understand how a QR code works.</h1>
+            <p class="lede">
+              Generate a live QR code, follow the encoded bitstream into the matrix, and
+              learn how structure, placement, blocks, and masking fit together.
+            </p>
+            <div class="hero-actions">
+              <a class="button-primary" href="#workbench">Start learning</a>
+              <a class="button-secondary-pill" href="#read-more">Read the series</a>
+            </div>
+          </div>
+
+          <div class="hero-media-grid">
+            <article class="hero-photo-card hero-photo-card-wide">
+              <div class="media-card-top">
+                <span class="mono-label">QR pipeline</span>
+                <span class="button-pill-outline">Interactive explainer</span>
+              </div>
+              <div class="hero-photo-visual">
+                <div class="hero-visual-column">
+                  <span class="visual-label">Input</span>
+                  <strong>Text to bitstream</strong>
+                  <p>Mode, count, payload, padding, and error correction stay visible step by step.</p>
+                </div>
+                <div class="hero-visual-divider"></div>
+                <div class="hero-visual-column">
+                  <span class="visual-label">Output</span>
+                  <strong>Bitstream to matrix</strong>
+                  <p>Placement order, structure overlays, and mask scoring update as the symbol is built.</p>
+                </div>
+              </div>
+            </article>
+
+            <article class="agent-console-card hero-console-card">
+              <div class="media-card-top media-card-top-dark">
+                <span class="mono-label mono-label-dark">Live summary</span>
+                <span class="console-status">Live</span>
+              </div>
+              <div id="statusPanel" class="status-panel"></div>
+              <section class="summary-grid" id="summaryGrid"></section>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell section-shell-dark" id="workbench">
+        <div class="container">
+          <div class="section-heading section-heading-on-dark">
+            <p class="eyebrow">Workbench</p>
+            <h2>Build the QR step by step.</h2>
+            <p class="section-copy">
+              Adjust the payload, change error correction, and switch overlays while the
+              live QR symbol and module map stay synchronized.
+            </p>
+          </div>
+
+          <div class="workbench-grid">
+            <article class="panel contact-form-card controls-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Input</p>
+                  <h3>Payload and controls</h3>
+                </div>
+                <button id="clearFocusButton" class="ghost-button" type="button">Clear focus</button>
+              </div>
+
+              <label class="field">
+                <span>Text</span>
+                <textarea id="textInput" rows="5" maxlength="160" spellcheck="false"></textarea>
+              </label>
+
+              <div class="control-strip">
+                <label class="field compact">
+                  <span>Error correction</span>
+                  <select id="eccSelect">
+                    <option value="L">L · low</option>
+                    <option value="M">M · medium</option>
+                    <option value="Q">Q · quartile</option>
+                    <option value="H">H · high</option>
+                  </select>
+                </label>
+
+                <div class="field compact">
+                  <span>Overlay mode</span>
+                  <div id="overlayModes" class="mode-switch">
+                    <button type="button" data-mode="structure">Structure</button>
+                    <button type="button" data-mode="segments">Segments</button>
+                    <button type="button" data-mode="blocks">Blocks</button>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel hero-photo-card viewer-panel">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Scan-ready</p>
+                  <h3>Live QR code</h3>
+                </div>
+              </div>
+              <div class="canvas-frame">
+                <canvas id="scanCanvas"></canvas>
+              </div>
+              <p class="hint">
+                The symbol preserves quiet-zone spacing and contrast so the live output remains scannable.
+              </p>
+            </article>
+
+            <article class="panel agent-console-card viewer-panel viewer-panel-wide">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Exploded view</p>
+                  <h3>Interactive module map</h3>
+                </div>
+                <div class="panel-actions">
+                  <button id="animateButton" class="ghost-button" type="button">Animate fill</button>
+                  <button id="singleStepButton" class="ghost-button" type="button">Single step</button>
+                  <button id="groupStepButton" class="ghost-button" type="button">Group step</button>
+                </div>
+              </div>
+              <div id="matrixShell" class="matrix-shell"></div>
+              <p class="hint">
+                Hover or pin a cell. With nothing selected, every writable module shows its placement order.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-shell section-shell-light" id="inspect">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow">Inspect</p>
+            <h2>Decode the symbol in layers.</h2>
+            <p class="section-copy">
+              Move from structural groups to encoded chunks, block splits, and module-level
+              explanations without losing the current matrix context.
+            </p>
+            <p class="section-copy">
+              Click any group below, then check the Selected detail panel for a deeper explanation.
+            </p>
+          </div>
+
+          <section class="details-grid">
+            <article class="panel capability-card utility-card-wide">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Legend</p>
+                  <h3>QR groups</h3>
+                </div>
+              </div>
+              <div id="legendPanel" class="token-grid"></div>
+            </article>
+
+            <article class="panel capability-card">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Step 1</p>
+                  <h3>Segments</h3>
+                </div>
+              </div>
+              <div id="segmentsPanel" class="stack-list"></div>
+            </article>
+
+            <article class="panel capability-card">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Step 2</p>
+                  <h3>Payload Groups</h3>
+                </div>
+              </div>
+              <div id="payloadGroupsPanel" class="stack-list"></div>
+            </article>
+
+            <article class="panel capability-card">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Step 3</p>
+                  <h3>Blocks</h3>
+                </div>
+              </div>
+              <div id="blocksPanel" class="stack-list"></div>
+            </article>
+
+            <article class="panel capability-card">
+              <div class="panel-head">
+                <div>
+                  <p class="eyebrow">Step 4</p>
+                  <h3>Selected detail</h3>
+                </div>
+              </div>
+              <div id="inspectorPanel" class="inspector"></div>
+            </article>
+          </section>
+        </div>
+      </section>
+
+      <section class="section-shell section-shell-stone" id="reed-solomon">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow">Reed-Solomon</p>
+            <h2>See how parity bytes protect the payload.</h2>
+            <p class="section-copy">
+              After the data bytes are assembled, QR splits them into blocks and generates
+              Reed-Solomon parity for each block before placement and masking begin.
+            </p>
+          </div>
+
+          <section id="reedSolomonPanel" class="rs-grid"></section>
+        </div>
+      </section>
+
+      <section class="section-shell section-shell-pale" id="masking">
+        <div class="container">
+          <div class="section-heading">
+            <p class="eyebrow">Masking</p>
+            <h2>Audit every candidate rule.</h2>
+            <p class="section-copy">
+              Compare the eight QR mask formulas, inspect each penalty category, and see
+              how the chosen pattern minimizes structure-like noise in the final symbol.
+            </p>
+          </div>
+
+          <section class="panel dark-feature-band masking-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Step 5</p>
+                <h3>Mask selection</h3>
+              </div>
+            </div>
+            <div id="maskingPanel" class="mask-grid"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer" id="read-more">
+      <div class="container footer-inner">
+        <div class="footer-newsletter">
+          <div class="footer-newsletter-copy">
+            <p class="footer-kicker">Keep learning</p>
+            <h2>Continue through the full QR explainer series.</h2>
+            <p>
+              Start with the interactive reader write-up, then go deeper into building
+              blocks, placement, Reed-Solomon error correction, and masking.
+            </p>
+          </div>
+          <a
+            class="footer-newsletter-action"
+            href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-1-the-building-blocks/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <span>Read the QR series</span>
+            <span>→</span>
+          </a>
+        </div>
+
+        <div class="footer-columns">
+          <div class="footer-column">
+            <p class="footer-heading">Guide</p>
+            <div class="footer-link-list">
+              <a class="footer-text-link" href="https://blog.rakshithnettar.com/building-an-interactive-qr-code-reader-that-explains-itself/" target="_blank" rel="noreferrer">Interactive QR reader write-up</a>
+              <a class="footer-text-link" href="#workbench">Open the workbench</a>
+              <a class="footer-text-link" href="#inspect">Inspect groups and blocks</a>
+            </div>
+          </div>
+
+          <div class="footer-column">
+            <p class="footer-heading">Series</p>
+            <div class="footer-link-list">
+              <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-1-the-building-blocks/" target="_blank" rel="noreferrer">Part 1: Building blocks</a>
+              <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-2-payload-groups-placement-and-pad-bytes/" target="_blank" rel="noreferrer">Part 2: Payload, placement, and pad bytes</a>
+              <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-3-reed-solomon-error-correction/" target="_blank" rel="noreferrer">Part 3: Error correction</a>
+            </div>
+          </div>
+
+          <div class="footer-column">
+            <p class="footer-heading">More</p>
+            <div class="footer-link-list">
+              <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-4-masking-the-matrix/" target="_blank" rel="noreferrer">Part 4: Masking</a>
+              <a class="footer-text-link" href="https://blog.rakshithnettar.com/read-qr-code-by-logic-part-5-the-other-qr-groups/" target="_blank" rel="noreferrer">Part 5: Other QR groups</a>
+              <a class="footer-text-link" href="https://rakshithnettar.com" target="_blank" rel="noreferrer">rakshithnettar.com</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-legal">
+          <span>Built as an interactive explainer for how QR symbols are assembled.</span>
+          <span>QR Code is a registered trademark of DENSO WAVE INCORPORATED.</span>
+        </div>
+      </div>
+    </footer>
   </div>
 `
 
@@ -287,6 +437,7 @@ const statusPanel = document.querySelector('#statusPanel')
 const summaryGrid = document.querySelector('#summaryGrid')
 const scanCanvas = document.querySelector('#scanCanvas')
 const matrixShell = document.querySelector('#matrixShell')
+const reedSolomonPanel = document.querySelector('#reedSolomonPanel')
 const maskingPanel = document.querySelector('#maskingPanel')
 const legendPanel = document.querySelector('#legendPanel')
 const segmentsPanel = document.querySelector('#segmentsPanel')
@@ -1332,7 +1483,6 @@ function renderMatrix() {
         fill="${isPinned ? 'rgba(2, 6, 23, 0.18)' : 'rgba(29, 78, 216, 0.08)'}"
         stroke="${stroke}"
         stroke-width="${strokeWidth}"
-        ${isPinned ? 'filter="url(#selectedCellShadow)"' : ''}
         pointer-events="none"
         vector-effect="non-scaling-stroke"
       />
@@ -1388,11 +1538,6 @@ function renderMatrix() {
         viewBox="-2 -2 ${size + 4} ${size + 4}"
         aria-label="Interactive QR code module map"
       >
-        <defs>
-          <filter id="selectedCellShadow" x="-30%" y="-30%" width="160%" height="160%">
-            <feDropShadow dx="0" dy="0" stdDeviation="0.08" flood-color="#020617" flood-opacity="0.6" />
-          </filter>
-        </defs>
         <rect x="-2" y="-2" width="${size + 4}" height="${size + 4}" rx="1.6" fill="#fffdf8"></rect>
         ${cells}
         ${selectionHighlights}
@@ -1714,6 +1859,165 @@ function renderBlocks() {
       </button>
     `
   }).join('')
+}
+
+function formatCodewordPreview(codewords, limit = 10) {
+  if (!codewords.length) return '—'
+
+  const preview = codewords
+    .slice(0, limit)
+    .map((codeword) => formatHexByte(codeword.value))
+    .join(' ')
+
+  return codewords.length > limit ? `${preview} …` : preview
+}
+
+function summarizeReedSolomonGroups(blocks) {
+  const families = new Map()
+
+  blocks.forEach((block) => {
+    const key = `${block.group}:${block.dataCodewordCount}:${block.errorCodewordCount}`
+    const existing = families.get(key)
+
+    if (existing) {
+      existing.count += 1
+      return
+    }
+
+    families.set(key, {
+      group: block.group,
+      dataCodewordCount: block.dataCodewordCount,
+      errorCodewordCount: block.errorCodewordCount,
+      count: 1
+    })
+  })
+
+  return [...families.values()]
+    .map((family) => (
+      `${family.count} block${family.count === 1 ? '' : 's'} in Group ${family.group} ` +
+      `with ${family.dataCodewordCount} data byte${family.dataCodewordCount === 1 ? '' : 's'} ` +
+      `and ${family.errorCodewordCount} parity byte${family.errorCodewordCount === 1 ? '' : 's'} each`
+    ))
+    .join(' · ')
+}
+
+function renderReedSolomonPanel() {
+  if (!state.analysis) {
+    reedSolomonPanel.innerHTML = '<div class="empty-card">Reed-Solomon error correction appears once a QR code is generated.</div>'
+    return
+  }
+
+  const { blocks, stats, finalCodewords } = state.analysis
+  const ecPerBlock = blocks[0]?.errorCodewordCount || 0
+  const groupedSummary = summarizeReedSolomonGroups(blocks)
+  const dataSizes = new Set(blocks.map((block) => block.dataCodewordCount))
+  const hasMixedDataSizes = dataSizes.size > 1
+  const errorCorrectionStream = finalCodewords
+    .filter((codeword) => codeword.type === 'error-correction')
+    .slice(0, 12)
+  const errorCorrectionPreview = errorCorrectionStream.length
+    ? errorCorrectionStream
+      .map((codeword) => `${codeword.blockLabel}·P${codeword.localIndex + 1}=${formatHexByte(codeword.value)}`)
+      .join('  ')
+    : '—'
+
+  reedSolomonPanel.innerHTML = `
+    <article class="rs-card rs-card-wide">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">Error correction</p>
+          <h3>How Reed-Solomon fits into this QR</h3>
+        </div>
+      </div>
+
+      <p class="preview">
+        QR does not send the raw data bytes into the matrix unprotected. It first splits the
+        data stream into blocks, then computes Reed-Solomon parity bytes for each block.
+        Those parity bytes are the remainder produced by the encoder over byte values in
+        GF(256), which lets a scanner recover from missing or damaged modules later.
+      </p>
+
+      <div class="inspect-grid">
+        <div><span>Blocks</span><strong>${blocks.length}</strong></div>
+        <div><span>Data bytes</span><strong>${stats.dataCodewords}</strong></div>
+        <div><span>Parity bytes</span><strong>${stats.errorCorrectionCodewords}</strong></div>
+        <div><span>Parity / block</span><strong>${ecPerBlock}</strong></div>
+      </div>
+
+      <div class="rs-flow-list">
+        <div class="rs-flow-item">
+          <span class="mono-label">1</span>
+          <p class="preview">
+            Build the full data byte stream first. That includes segment headers, payload,
+            terminator bits, byte alignment, and pad bytes.
+          </p>
+        </div>
+        <div class="rs-flow-item">
+          <span class="mono-label">2</span>
+          <p class="preview">
+            Split the data bytes into ${blocks.length} block${blocks.length === 1 ? '' : 's'}.
+            For this QR: ${escapeHtml(groupedSummary)}.
+          </p>
+        </div>
+        <div class="rs-flow-item">
+          <span class="mono-label">3</span>
+          <p class="preview">
+            Generate ${ecPerBlock} parity byte${ecPerBlock === 1 ? '' : 's'} for each block,
+            then interleave all data codewords first and all parity codewords after that before placement and masking.
+          </p>
+        </div>
+      </div>
+    </article>
+
+    <article class="rs-card rs-card-wide">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">Interleaving</p>
+          <h3>What the final parity stream looks like</h3>
+        </div>
+      </div>
+
+      <p class="preview">
+        The QR encoder takes one data byte from each block at a time. After the data pass is
+        finished, it does the same with the Reed-Solomon parity bytes. ${hasMixedDataSizes
+          ? 'Because this version has mixed block sizes, the longer group contributes one extra data byte before parity interleaving begins.'
+          : 'Because every block is the same size here, each data round pulls one byte from every block.'}
+      </p>
+
+      <div class="rs-codeword-box">
+        <span class="mono-label">First parity bytes in interleaved order</span>
+        <p class="preview mono">${escapeHtml(errorCorrectionPreview)}</p>
+      </div>
+    </article>
+
+    ${blocks.map((block) => `
+      <article class="rs-card">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Block ${block.id + 1}</p>
+            <h3>${block.label}</h3>
+          </div>
+          <span class="badge">${block.dataCodewordCount}+${block.errorCodewordCount}</span>
+        </div>
+
+        <p class="preview">
+          This block starts with ${block.dataCodewordCount} data byte${block.dataCodewordCount === 1 ? '' : 's'}
+          and Reed-Solomon generates ${block.errorCodewordCount} parity byte${block.errorCodewordCount === 1 ? '' : 's'} from them.
+        </p>
+
+        <div class="rs-codeword-columns">
+          <div class="rs-codeword-box">
+            <span class="mono-label">Data bytes</span>
+            <p class="preview mono">${escapeHtml(formatCodewordPreview(block.dataCodewords, 12))}</p>
+          </div>
+          <div class="rs-codeword-box">
+            <span class="mono-label">Parity bytes</span>
+            <p class="preview mono">${escapeHtml(formatCodewordPreview(block.errorCodewords, 12))}</p>
+          </div>
+        </div>
+      </article>
+    `).join('')}
+  `
 }
 
 function renderSelectionSummary() {
@@ -2059,6 +2363,7 @@ function render() {
   renderSegments()
   renderPayloadGroups()
   renderBlocks()
+  renderReedSolomonPanel()
   renderInspector()
   updateAnimationButtons()
 }
